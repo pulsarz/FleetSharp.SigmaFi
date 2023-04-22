@@ -155,10 +155,10 @@ namespace FleetSharp.SigmaFi
 
             var tokenUSDPrice = await SpectrumFi.SpectrumFi.GetLastPriceForTokenInUSDCached(tokenId.ToLowerInvariant());
 
-            var borrower = ConstantSerializer.SParse(FleetSharp.Tools.HexToBytes(box.additionalRegisters.R4));
-            var amount = ConstantSerializer.SParse(FleetSharp.Tools.HexToBytes(box.additionalRegisters.R5));
-            var repayment = ConstantSerializer.SParse(FleetSharp.Tools.HexToBytes(box.additionalRegisters.R6));
-            var maturityLength = ConstantSerializer.SParse(FleetSharp.Tools.HexToBytes(box.additionalRegisters.R7));
+            var borrower = ConstantSerializer.SParse(box.additionalRegisters.R4);
+            var amount = ConstantSerializer.SParse(box.additionalRegisters.R5);
+            var repayment = ConstantSerializer.SParse(box.additionalRegisters.R6);
+            var maturityLength = ConstantSerializer.SParse(box.additionalRegisters.R7);
 
             var interestValue = (repayment ?? 0) - (amount ?? 0);
             double interestValueDecimals = (tokenId == "erg" ? (interestValue / Math.Pow(10, 9)) : (interestValue / Math.Pow(10, token.decimals)));
@@ -175,7 +175,7 @@ namespace FleetSharp.SigmaFi
 
             if (box.value > SAFE_MIN_BOX_VALUE)
             {
-                collateral.Add(new SigmaFiVerifiedAssetAmount("erg", Convert.ToInt64(box.value / Math.Pow(10, 9)), new SigmaFiVerifiedAssetMetadata("erg", 9)));
+                collateral.Add(await CreateSigmaFiVerifiedAssetAmount("erg", Convert.ToInt64(box.value / Math.Pow(10, 9)), new SigmaFiVerifiedAssetMetadata("erg", 9)));
                 collateralUSDValue += ((box.value / Math.Pow(10, 9)) * ergUSDPrice);
             }
 
@@ -185,7 +185,7 @@ namespace FleetSharp.SigmaFi
                 {
                     var collateralToken = await Cache.GetTokenFromCache(this.node, asset.tokenId);
                     var colUSDPrice = await SpectrumFi.SpectrumFi.GetLastPriceForTokenInUSDCached(asset.tokenId);
-                    collateral.Add(new SigmaFiVerifiedAssetAmount(collateralToken?.id, Convert.ToInt64(box.value / Math.Pow(10, collateralToken?.decimals ?? 0)), new SigmaFiVerifiedAssetMetadata(((collateralToken?.name ?? "") == "" ? asset.tokenId : collateralToken?.name), collateralToken.decimals)));
+                    collateral.Add(await CreateSigmaFiVerifiedAssetAmount(collateralToken?.id, Convert.ToInt64(box.value / Math.Pow(10, collateralToken?.decimals ?? 0)), new SigmaFiVerifiedAssetMetadata(((collateralToken?.name ?? "") == "" ? asset.tokenId : collateralToken?.name), collateralToken.decimals)));
                     collateralUSDValue += ((asset.amount / Math.Pow(10, collateralToken.decimals)) * colUSDPrice);
                 }
             }
@@ -196,18 +196,22 @@ namespace FleetSharp.SigmaFi
             {
                 box = box,
                 borrower = ErgoAddress.fromPublicKeyBytes(borrower, Network.Mainnet).encode(Network.Mainnet),
-                requested = new SigmaFiVerifiedAssetAmount(tokenId, amount, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals)),
-                repayment = new SigmaFiVerifiedAssetAmount(tokenId, repayment, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals)),
+                requested = await CreateSigmaFiVerifiedAssetAmount(tokenId, amount, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals)),
+                repayment = await CreateSigmaFiVerifiedAssetAmount(tokenId, repayment, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals)),
                 maturityLength = maturityLength,
                 collateral = collateral,
                 collateralizationRatio = collateralizationRatio,
-                interest = new SigmaFiVerifiedAssetAmount(tokenId, interestValue, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals)),
+                interest = await CreateSigmaFiVerifiedAssetAmount(tokenId, interestValue, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals)),
                 interestPercentage = interestPercentage,
                 APR = apr
             };
 
             return order;
         }
+       /* public async Task<SigmaFiOrderExtended> ParseBondBox(NodeBox box)
+        {
+
+        }*/
         public async Task<List<SigmaFiOrderExtended>?> GetAllOpenOrders()
         {
             List<string> ergoTrees = OpenOrderErgoTrees();
@@ -266,6 +270,21 @@ namespace FleetSharp.SigmaFi
             totalBalance.confirmed.tokens = totalBalance.confirmed.tokens.GroupBy(x => x.tokenId).Select(x => new NodeBalanceToken() { tokenId = x.First().tokenId, amount = x.Sum(y => y.amount), decimals = x.First().decimals, name = x.First().name }).ToList();
 
             return totalBalance;
+        }
+
+        private static async Task<SigmaFiVerifiedAssetAmount> CreateSigmaFiVerifiedAssetAmount(string? tokenId, long? amount, SigmaFiVerifiedAssetMetadata? metadata)
+        {
+            var tokenUSDPrice = await SpectrumFi.SpectrumFi.GetLastPriceForTokenInUSDCached(tokenId.ToLowerInvariant());
+            var amountWithDecimals = (Convert.ToDouble(amount ?? 0) / Math.Pow(10, metadata?.decimals ?? 0));
+
+            return new SigmaFiVerifiedAssetAmount()
+            {
+                tokenId = tokenId,
+                amount = amount,
+                metadata = metadata,
+                amountWithDecimals = amountWithDecimals,
+                usdValue = Math.Round(tokenUSDPrice * amountWithDecimals, 2)
+            };
         }
     }
 }

@@ -28,15 +28,7 @@ namespace FleetSharp.SigmaFi.Types
     {
         public long? amount { get; set; }
         public double? amountWithDecimals { get; set; }
-
-        public SigmaFiVerifiedAssetAmount(string? tokenId, long? amount, SigmaFiVerifiedAssetMetadata? metadata)
-        {
-            this.tokenId = tokenId;
-            this.amount = amount;
-            this.metadata = metadata;
-
-            this.amountWithDecimals = (Convert.ToDouble(amount ?? 0) / Math.Pow(10, metadata?.decimals ?? 0));
-        }
+        public double? usdValue { get; set; }
     }
 
     public class SigmaFiOrder
