@@ -39,8 +39,6 @@ namespace FleetSharp.SigmaFi.Types
         public int? maturityLength { get; set; }//amount of blocks before default
     }
 
-    
-
     public class SigmaFiOrderExtended : SigmaFiOrder
     {
         public NodeBox? box { get; set; }
@@ -49,5 +47,17 @@ namespace FleetSharp.SigmaFi.Types
         public SigmaFiVerifiedAssetAmount? interest { get; set; }
         public double interestPercentage { get; set; }
         public double APR { get; set; }
+    }
+
+    public class SigmaFiBond
+    {
+        public string? borrower { get; set; }
+        public string? lender { get; set; }
+        public SigmaFiVerifiedAssetAmount? repayment { get; set; }
+        public List<SigmaFiVerifiedAssetAmount>? collateral { get; set; }
+        public double collateralizationRatio { get; set; }
+        public int? termInBlocks { get; set; }//amount of blocks left
+        public long? termInSeconds { get; set; }//amount of seconds left
+        public NodeBox? box { get; set; }
     }
 }

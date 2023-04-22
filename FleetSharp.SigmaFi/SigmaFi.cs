@@ -151,10 +151,10 @@ namespace FleetSharp.SigmaFi
             var tokenId = ExtractTokenIdFromOrderContract(box.ergoTree);
             var token = await Cache.GetTokenFromCache(this.node, tokenId);
 
-            var borrower = ConstantSerializer.SParse(box.additionalRegisters.R4);
-            var amount = ConstantSerializer.SParse(box.additionalRegisters.R5);
-            var repayment = ConstantSerializer.SParse(box.additionalRegisters.R6);
-            var maturityLength = ConstantSerializer.SParse(box.additionalRegisters.R7);
+            var borrower = box?.additionalRegisters?.R4 != null ? ConstantSerializer.SParse(box.additionalRegisters.R4) : "";
+            var amount = box?.additionalRegisters?.R5 != null ? ConstantSerializer.SParse(box.additionalRegisters.R5) : 0;
+            var repayment = box?.additionalRegisters?.R6 != null ? ConstantSerializer.SParse(box.additionalRegisters.R6) : 0;
+            var maturityLength = box?.additionalRegisters?.R7 != null ? ConstantSerializer.SParse(box.additionalRegisters.R7) : 0;
 
             var interestValue = (repayment ?? 0) - (amount ?? 0);
             SigmaFiVerifiedAssetAmount interestObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, interestValue, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
@@ -190,7 +190,6 @@ namespace FleetSharp.SigmaFi
 
             var order = new SigmaFiOrderExtended
             {
-                box = box,
                 borrower = ErgoAddress.fromPublicKeyBytes(borrower, Network.Mainnet).encode(Network.Mainnet),
                 requested = requestedObj,
                 repayment = repaymentObj,
@@ -199,15 +198,66 @@ namespace FleetSharp.SigmaFi
                 collateralizationRatio = collateralizationRatio,
                 interest = interestObj,
                 interestPercentage = interestPercentage,
-                APR = apr
+                APR = apr,
+                box = box
             };
 
             return order;
         }
-       /* public async Task<SigmaFiOrderExtended> ParseBondBox(NodeBox box)
+        public async Task<SigmaFiBond> ParseBondBox(NodeBox box)
         {
+            var indexedHeight = await node.GetIndexedHeight();
+            var currentHeight = indexedHeight?.fullHeight ?? 0;
 
-        }*/
+            var tokenId = ExtractTokenIdFromOrderContract(box.ergoTree);
+            var token = await Cache.GetTokenFromCache(this.node, tokenId);
+
+            var borrower = box?.additionalRegisters?.R5 != null ? ConstantSerializer.SParse(box.additionalRegisters.R5) : "";
+            var repayment = box?.additionalRegisters?.R6 != null ? ConstantSerializer.SParse(box.additionalRegisters.R6) : 0;
+            var blocksLeft = (box?.additionalRegisters?.R7 != null ? ConstantSerializer.SParse(box.additionalRegisters.R7) : 0) - currentHeight;
+            var lender = box?.additionalRegisters?.R8 != null ? ConstantSerializer.SParse(box.additionalRegisters.R8) : "";
+
+            SigmaFiVerifiedAssetAmount repaymentObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, repayment, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
+
+            double collateralUSDValue = 0;
+
+            List<SigmaFiVerifiedAssetAmount> collateral = new List<SigmaFiVerifiedAssetAmount>();
+
+            if (box.value > SAFE_MIN_BOX_VALUE)
+            {
+                var assetObj = await CreateSigmaFiVerifiedAssetAmount("erg", box.value, new SigmaFiVerifiedAssetMetadata("erg", 9));
+                collateral.Add(assetObj);
+                collateralUSDValue += assetObj.usdValue ?? 0;
+            }
+
+            if (box.assets != null)
+            {
+                foreach (var asset in box.assets)
+                {
+                    var collateralToken = await Cache.GetTokenFromCache(this.node, asset.tokenId);
+                    var assetObj = await CreateSigmaFiVerifiedAssetAmount(asset.tokenId, asset.amount, new SigmaFiVerifiedAssetMetadata(((collateralToken?.name ?? "") == "" ? asset.tokenId : collateralToken?.name), collateralToken.decimals));
+                    collateral.Add(assetObj);
+                    collateralUSDValue += assetObj.usdValue ?? 0;
+                }
+            }
+
+            var collateralizationRatio = (collateralUSDValue / (repaymentObj.usdValue ?? 0)) * 100.0;
+
+            var bond = new SigmaFiBond
+            {
+                borrower = ErgoAddress.fromPublicKeyBytes(borrower, Network.Mainnet).encode(Network.Mainnet),
+                lender = ErgoAddress.fromPublicKeyBytes(lender, Network.Mainnet).encode(Network.Mainnet),
+                repayment = repaymentObj,
+                collateral = collateral,
+                collateralizationRatio = collateralizationRatio,
+                termInBlocks = blocksLeft,
+                termInSeconds = (blocksLeft * Convert.ToDouble(ergoSecondsPerBlock)),
+                box = box
+            };
+
+            return bond;
+
+        }
         public async Task<List<SigmaFiOrderExtended>?> GetAllOpenOrders()
         {
             List<string> ergoTrees = OpenOrderErgoTrees();
