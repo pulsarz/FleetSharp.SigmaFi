@@ -214,7 +214,7 @@ namespace FleetSharp.SigmaFi
 
             var borrower = box?.additionalRegisters?.R5 != null ? ConstantSerializer.SParse(box.additionalRegisters.R5) : "";
             var repayment = box?.additionalRegisters?.R6 != null ? ConstantSerializer.SParse(box.additionalRegisters.R6) : 0;
-            var blocksLeft = (box?.additionalRegisters?.R7 != null ? ConstantSerializer.SParse(box.additionalRegisters.R7) : 0) - currentHeight;
+            var term = (box?.additionalRegisters?.R7 != null ? ConstantSerializer.SParse(box.additionalRegisters.R7) : 0);
             var lender = box?.additionalRegisters?.R8 != null ? ConstantSerializer.SParse(box.additionalRegisters.R8) : "";
 
             SigmaFiVerifiedAssetAmount repaymentObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, repayment, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
@@ -250,8 +250,8 @@ namespace FleetSharp.SigmaFi
                 repayment = repaymentObj,
                 collateral = collateral,
                 collateralizationRatio = collateralizationRatio,
-                termInBlocks = blocksLeft,
-                termInSeconds = (blocksLeft * Convert.ToDouble(ergoSecondsPerBlock)),
+                termInBlocks = term,
+                termInBlocksLeft = term - currentHeight,
                 box = box
             };
 

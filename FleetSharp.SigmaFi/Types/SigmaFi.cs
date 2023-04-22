@@ -56,8 +56,8 @@ namespace FleetSharp.SigmaFi.Types
         public SigmaFiVerifiedAssetAmount? repayment { get; set; }
         public List<SigmaFiVerifiedAssetAmount>? collateral { get; set; }
         public double collateralizationRatio { get; set; }
-        public int? termInBlocks { get; set; }//amount of blocks left
-        public long? termInSeconds { get; set; }//amount of seconds left
+        public int? termInBlocks { get; set; }//amount of blocks the term was for
+        public int? termInBlocksLeft { get; set; }//amount of blocks left in the term
         public NodeBox? box { get; set; }
     }
 }
