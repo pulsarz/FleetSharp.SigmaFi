@@ -175,7 +175,7 @@ namespace FleetSharp.SigmaFi
 
             if (box.value > SAFE_MIN_BOX_VALUE)
             {
-                collateral.Add(await CreateSigmaFiVerifiedAssetAmount("erg", Convert.ToInt64(box.value / Math.Pow(10, 9)), new SigmaFiVerifiedAssetMetadata("erg", 9)));
+                collateral.Add(await CreateSigmaFiVerifiedAssetAmount("erg", box.value, new SigmaFiVerifiedAssetMetadata("erg", 9)));
                 collateralUSDValue += ((box.value / Math.Pow(10, 9)) * ergUSDPrice);
             }
 
@@ -185,7 +185,7 @@ namespace FleetSharp.SigmaFi
                 {
                     var collateralToken = await Cache.GetTokenFromCache(this.node, asset.tokenId);
                     var colUSDPrice = await SpectrumFi.SpectrumFi.GetLastPriceForTokenInUSDCached(asset.tokenId);
-                    collateral.Add(await CreateSigmaFiVerifiedAssetAmount(collateralToken?.id, Convert.ToInt64(box.value / Math.Pow(10, collateralToken?.decimals ?? 0)), new SigmaFiVerifiedAssetMetadata(((collateralToken?.name ?? "") == "" ? asset.tokenId : collateralToken?.name), collateralToken.decimals)));
+                    collateral.Add(await CreateSigmaFiVerifiedAssetAmount(collateralToken?.id, box.value, new SigmaFiVerifiedAssetMetadata(((collateralToken?.name ?? "") == "" ? asset.tokenId : collateralToken?.name), collateralToken.decimals)));
                     collateralUSDValue += ((asset.amount / Math.Pow(10, collateralToken.decimals)) * colUSDPrice);
                 }
             }
