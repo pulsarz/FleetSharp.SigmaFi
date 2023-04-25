@@ -58,8 +58,8 @@ namespace FleetSharp.SigmaFi
             "101c04000e20003bd19d0187117f130b62e1bcab0939929ff5c7709f843c5c4dd158949285d005e80705c09a0c08cd03a11d3028b9bc57b6ac724485e99960b89c278db6bab5d2b961b01aee29405a0205a0060601000e207db936eb6a8d804fdf8faee368ee6f5ce4943246798734cfdf0b0f88d56afc8c040204000400043c041004000580897a0402040404000580897a040201010402040604000580897a040201010101d80cd601b2a5730000d602e4c6a70408d603e4c6a70704d6047301d605e4c6a70505d606e30008d607e67206d6087302d6097303d60a7304d60b957207d801d60b7e720506830244068602720a9d9c7e720806720b7e7209068602e472069d9c7e730506720b7e720906830144068602720a9d9c7e7208067e7205067e720906d60c730695937307cbc27201d806d60d999aa37203e4c672010704d60eb2a5730800d60fdb6308720ed610b2720f730900d611b2720b730a00d6128c721102d1ed96830e0193e4c67201040ec5a793e4c672010508720293e4c672010605e4c6a70605e6c67201080893db63087201db6308a793c17201c1a7927203730b90720d730c92720d730d93c2720ed0720293c1720e730e938c7210017204938c721002720593b1720f730fed95917212720cd803d613b2a5731000d614db63087213d615b272147311009683050193c27213d08c72110193c172137312938c7215017204937e8c72150206721293b1721473137314957207d802d613b2720b731500d6148c72130295917214720cd803d615b2a5731600d616db63087215d617b272167317009683050193c27215d08c72130193c172157318938c7217017204937e8c72170206721493b172167319731a731b7202"
         };*/
 
-        private static List<string>? OpenOrdersErgoTrees = null;
-        private static List<string>? OngoingLoansErgoTrees = null;
+        //private static List<string>? OpenOrdersErgoTrees = null;
+        //private static List<string>? OngoingLoansErgoTrees = null;
 
         //Bond
         private string buildBondContract(string tokenId)
@@ -98,9 +98,10 @@ namespace FleetSharp.SigmaFi
         }
 
         //Result is cached.
-        public List<string> OpenOrderErgoTrees()
+        public List<string> OpenOrderErgoTrees(string? filterTokenId = null)
         {
-            if (OpenOrdersErgoTrees != null) return OpenOrdersErgoTrees;
+            //No caching for now.
+            //if (OpenOrdersErgoTrees != null) return OpenOrdersErgoTrees;
 
             //Only do this if the property was still empty
             List<string> ret = new List<string>();
@@ -110,17 +111,21 @@ namespace FleetSharp.SigmaFi
             //Create the ergotree's for all verified assets (always on-close)
             foreach (var asset in SigmaFiVerifiedAssets)
             {
-                if (asset != null && asset.tokenId != null) ret.Add(BuildOrderContract(asset.tokenId, "on-close"));
+                if (asset != null && asset.tokenId != null)
+                {
+                    if (filterTokenId == null || asset.tokenId == filterTokenId) ret.Add(BuildOrderContract(asset.tokenId, "on-close"));
+                }
             }
 
-            OpenOrdersErgoTrees = ret;
+            //OpenOrdersErgoTrees = ret;
 
             return ret;
         }
 
-        public List<string> OngoingLoanErgoTrees()
+        public List<string> OngoingLoanErgoTrees(string? filterTokenId = null)
         {
-            if (OngoingLoansErgoTrees != null) return OngoingLoansErgoTrees;
+            //No caching for now.
+            //if (OngoingLoansErgoTrees != null) return OngoingLoansErgoTrees;
 
             //Only do this if the property was still empty
             List<string> ret = new List<string>();
@@ -128,10 +133,13 @@ namespace FleetSharp.SigmaFi
             //Create the ergotree's for all verified assets (always on-close)
             foreach (var asset in SigmaFiVerifiedAssets)
             {
-                if (asset != null && asset.tokenId != null) ret.Add(buildBondContract(asset.tokenId));
+                if (asset != null && asset.tokenId != null)
+                {
+                    if (filterTokenId == null || asset.tokenId == filterTokenId) ret.Add(buildBondContract(asset.tokenId));
+                }
             }
 
-            OngoingLoansErgoTrees = ret;
+            //OngoingLoansErgoTrees = ret;
 
             return ret;
         }
@@ -146,6 +154,17 @@ namespace FleetSharp.SigmaFi
 
             return "erg";
         }
+        private string ExtractTokenIdFromBondContract(string contract)
+        {
+            if (contract.StartsWith(TOKEN_BOND_CONTRACT_TEMPLATE[0]))
+            {
+                var start = TOKEN_BOND_CONTRACT_TEMPLATE[0].Length;
+                return contract.Substring(start, 64);
+            }
+
+            return "erg";
+        }
+
         public async Task<SigmaFiOrderExtended> ParseOrderBox(NodeBox box)
         {
             var tokenId = ExtractTokenIdFromOrderContract(box.ergoTree);
@@ -209,7 +228,7 @@ namespace FleetSharp.SigmaFi
             var indexedHeight = await node.GetIndexedHeight();
             var currentHeight = indexedHeight?.fullHeight ?? 0;
 
-            var tokenId = ExtractTokenIdFromOrderContract(box.ergoTree);
+            var tokenId = ExtractTokenIdFromBondContract(box.ergoTree);
             var token = await Cache.GetTokenFromCache(this.node, tokenId);
 
             var borrower = box?.additionalRegisters?.R5 != null ? ConstantSerializer.SParse(box.additionalRegisters.R5) : "";
@@ -250,17 +269,16 @@ namespace FleetSharp.SigmaFi
                 repayment = repaymentObj,
                 collateral = collateral,
                 collateralizationRatio = collateralizationRatio,
-                termInBlocks = term,
-                termInBlocksLeft = term - currentHeight,
+                termInBlocks = term - currentHeight,
                 box = box
             };
 
             return bond;
 
         }
-        public async Task<List<SigmaFiOrderExtended>?> GetAllOpenOrders()
+        public async Task<List<SigmaFiOrderExtended>?> GetAllOpenOrders(string? filterTokenIdRequested = null, string? filterTokenIdCollateral = null)
         {
-            List<string> ergoTrees = OpenOrderErgoTrees();
+            List<string> ergoTrees = OpenOrderErgoTrees(filterTokenIdRequested);
             List<NodeBox> boxes = new List<NodeBox>();
             List<SigmaFiOrderExtended> openOrders = new List<SigmaFiOrderExtended>();
 
@@ -273,10 +291,46 @@ namespace FleetSharp.SigmaFi
             //boxes should contain all unspent sigmafi order boxes
             foreach (var box in boxes)
             {
-                openOrders.Add((await ParseOrderBox(box)));
+                var order = await ParseOrderBox(box);
+                if (filterTokenIdRequested == null || order.requested?.tokenId == filterTokenIdRequested)
+                {
+                    if (filterTokenIdCollateral == null || (order.collateral?.Exists(x => x.tokenId == filterTokenIdCollateral) ?? false))
+                    {
+                        openOrders.Add(order);
+                    }
+                }
             }
 
             return openOrders;
+        }
+
+        //If liquidable = false then only show those that have a positive term, if true then only those that have a negative term. Null returns all.
+        public async Task<List<SigmaFiBond>?> GetAllOngoingLoans(string? filterTokenIdRepayment = null, string? filterTokenIdCollateral = null)
+        {
+            List<string> ergoTrees = OngoingLoanErgoTrees(filterTokenIdRepayment);
+            List<NodeBox> boxes = new List<NodeBox>();
+            List<SigmaFiBond> ongoingLoans = new List<SigmaFiBond>();
+
+            foreach (var ergoTree in ergoTrees)
+            {
+                var unspent = await node.GetUnspentBoxesByErgoTree(ergoTree);
+                if (unspent != null) boxes.AddRange(unspent);
+            }
+
+            //boxes should contain all unspent sigmafi order boxes
+            foreach (var box in boxes)
+            {
+                var bond = await ParseBondBox(box);
+                if (filterTokenIdRepayment == null || bond.repayment?.tokenId == filterTokenIdRepayment)
+                {
+                    if (filterTokenIdCollateral == null || (bond.collateral?.Exists(x => x.tokenId == filterTokenIdCollateral) ?? false))
+                    {
+                        ongoingLoans.Add(bond);
+                    }
+                }
+            }
+
+            return ongoingLoans;
         }
 
         //Aggregates all NodeBalanceés of all contract addresses.
