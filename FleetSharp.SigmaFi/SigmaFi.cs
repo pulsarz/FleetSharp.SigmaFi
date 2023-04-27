@@ -218,7 +218,8 @@ namespace FleetSharp.SigmaFi
                 interest = interestObj,
                 interestPercentage = interestPercentage,
                 APR = apr,
-                box = box
+                boxId = box.boxId,
+                creationHeight = box.creationHeight
             };
 
             return order;
@@ -270,7 +271,8 @@ namespace FleetSharp.SigmaFi
                 collateral = collateral,
                 collateralizationRatio = collateralizationRatio,
                 termInBlocks = term - currentHeight,
-                box = box
+                boxId = box.boxId,
+                creationHeight = box.creationHeight
             };
 
             return bond;
