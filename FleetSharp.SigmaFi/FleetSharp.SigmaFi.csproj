@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="FleetSharp" Version="1.0.29" />
-    <PackageReference Include="FleetSharp.SpectrumFi" Version="1.0.2" />
+    <PackageReference Include="FleetSharp.SpectrumFi" Version="1.0.5" />
   </ItemGroup>
 
 </Project>
