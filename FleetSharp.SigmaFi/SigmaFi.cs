@@ -170,18 +170,18 @@ namespace FleetSharp.SigmaFi
             var tokenId = ExtractTokenIdFromOrderContract(box.ergoTree);
             var token = await Cache.GetTokenFromCache(this.node, tokenId);
 
-            var borrower = box?.additionalRegisters?.R4 != null ? ConstantSerializer.SParse(box.additionalRegisters.R4) : "";
-            var amount = box?.additionalRegisters?.R5 != null ? ConstantSerializer.SParse(box.additionalRegisters.R5) : 0;
-            var repayment = box?.additionalRegisters?.R6 != null ? ConstantSerializer.SParse(box.additionalRegisters.R6) : 0;
-            var maturityLength = box?.additionalRegisters?.R7 != null ? ConstantSerializer.SParse(box.additionalRegisters.R7) : 0;
+            byte[] borrower = box?.additionalRegisters?.R4 != null ? ConstantSerializer.SParse(box.additionalRegisters.R4) : "";
+            long amount = box?.additionalRegisters?.R5 != null ? ConstantSerializer.SParse(box.additionalRegisters.R5) : 0;
+            long repayment = box?.additionalRegisters?.R6 != null ? ConstantSerializer.SParse(box.additionalRegisters.R6) : 0;
+            int maturityLength = box?.additionalRegisters?.R7 != null ? ConstantSerializer.SParse(box.additionalRegisters.R7) : 0;
 
-            var interestValue = (repayment ?? 0) - (amount ?? 0);
+            var interestValue = repayment - amount;
             SigmaFiVerifiedAssetAmount interestObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, interestValue, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
             SigmaFiVerifiedAssetAmount requestedObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, amount, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
             SigmaFiVerifiedAssetAmount repaymentObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, repayment, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
 
-            double interestPercentage = Math.Round(Convert.ToDouble(interestValue) / Convert.ToDouble(amount ?? 0) * 100.0, 3);
-            var apr = Math.Round((interestPercentage / ((Convert.ToDouble(maturityLength ?? 0) * Convert.ToDouble(ergoSecondsPerBlock)) / 60.0 / 60.0 / 24.0)) * 365.0, 3);
+            double interestPercentage = Math.Round(Convert.ToDouble(interestValue) / Convert.ToDouble(amount) * 100.0, 3);
+            var apr = Math.Round((interestPercentage / ((Convert.ToDouble(maturityLength) * Convert.ToDouble(ergoSecondsPerBlock)) / 60.0 / 60.0 / 24.0)) * 365.0, 3);
 
             double collateralUSDValue = 0;
 
@@ -232,10 +232,10 @@ namespace FleetSharp.SigmaFi
             var tokenId = ExtractTokenIdFromBondContract(box.ergoTree);
             var token = await Cache.GetTokenFromCache(this.node, tokenId);
 
-            var borrower = box?.additionalRegisters?.R5 != null ? ConstantSerializer.SParse(box.additionalRegisters.R5) : "";
-            var repayment = box?.additionalRegisters?.R6 != null ? ConstantSerializer.SParse(box.additionalRegisters.R6) : 0;
-            var term = (box?.additionalRegisters?.R7 != null ? ConstantSerializer.SParse(box.additionalRegisters.R7) : 0);
-            var lender = box?.additionalRegisters?.R8 != null ? ConstantSerializer.SParse(box.additionalRegisters.R8) : "";
+            byte[] borrower = box?.additionalRegisters?.R5 != null ? ConstantSerializer.SParse(box.additionalRegisters.R5) : "";
+            long repayment = box?.additionalRegisters?.R6 != null ? ConstantSerializer.SParse(box.additionalRegisters.R6) : 0;
+            int term = (box?.additionalRegisters?.R7 != null ? ConstantSerializer.SParse(box.additionalRegisters.R7) : 0);
+            byte[] lender = box?.additionalRegisters?.R8 != null ? ConstantSerializer.SParse(box.additionalRegisters.R8) : "";
 
             SigmaFiVerifiedAssetAmount repaymentObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, repayment, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
 
