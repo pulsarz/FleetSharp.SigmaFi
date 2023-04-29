@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -10,11 +11,11 @@ namespace FleetSharp.SigmaFi
 {
     internal class Cache
     {
-        private static ConcurrentDictionary<string, NodeToken> tokenCache = new ConcurrentDictionary<string, NodeToken>();
+        private static ConcurrentDictionary<string, TokenDetail<long>> tokenCache = new ConcurrentDictionary<string, TokenDetail<long>>();
 
-        public static async Task<NodeToken?> GetTokenFromCache(NodeInterface node, string tokenId)
+        public static async Task<TokenDetail<long>?> GetTokenFromCache(NodeInterface node, string tokenId)
         {
-            NodeToken? ret = null;
+            TokenDetail<long>? ret = null;
             if (tokenId == "ERG" || tokenId == "erg") return null;
             var succes = tokenCache.TryGetValue(tokenId, out ret);
 

@@ -3,6 +3,7 @@ using FleetSharp.Sigma;
 using FleetSharp.SigmaFi.Types;
 using FleetSharp.Types;
 using FleetSharp.SpectrumFi;
+using System.Numerics;
 
 namespace FleetSharp.SigmaFi
 {
@@ -165,7 +166,7 @@ namespace FleetSharp.SigmaFi
             return "erg";
         }
 
-        public async Task<SigmaFiOrderExtended> ParseOrderBox(NodeBox box)
+        public async Task<SigmaFiOrderExtended> ParseOrderBox(Box<long> box)
         {
             var tokenId = ExtractTokenIdFromOrderContract(box.ergoTree);
             var token = await Cache.GetTokenFromCache(this.node, tokenId);
@@ -175,7 +176,7 @@ namespace FleetSharp.SigmaFi
             long repayment = box?.additionalRegisters?.R6 != null ? ConstantSerializer.SParse(box.additionalRegisters.R6) : 0;
             int maturityLength = box?.additionalRegisters?.R7 != null ? ConstantSerializer.SParse(box.additionalRegisters.R7) : 0;
 
-            var interestValue = repayment - amount;
+            long interestValue = repayment - amount;
             SigmaFiVerifiedAssetAmount interestObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, interestValue, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
             SigmaFiVerifiedAssetAmount requestedObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, amount, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
             SigmaFiVerifiedAssetAmount repaymentObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, repayment, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
@@ -224,7 +225,7 @@ namespace FleetSharp.SigmaFi
 
             return order;
         }
-        public async Task<SigmaFiBond> ParseBondBox(NodeBox box)
+        public async Task<SigmaFiBond> ParseBondBox(Box<long> box)
         {
             var indexedHeight = await node.GetIndexedHeight();
             var currentHeight = indexedHeight?.fullHeight ?? 0;
@@ -281,7 +282,7 @@ namespace FleetSharp.SigmaFi
         public async Task<List<SigmaFiOrderExtended>?> GetAllOpenOrders(string? filterTokenIdRequested = null, string? filterTokenIdCollateral = null)
         {
             List<string> ergoTrees = OpenOrderErgoTrees(filterTokenIdRequested);
-            List<NodeBox> boxes = new List<NodeBox>();
+            List<Box<long>> boxes = new List<Box<long>>();
             List<SigmaFiOrderExtended> openOrders = new List<SigmaFiOrderExtended>();
 
             foreach (var ergoTree in ergoTrees)
@@ -310,7 +311,7 @@ namespace FleetSharp.SigmaFi
         public async Task<List<SigmaFiBond>?> GetAllOngoingLoans(string? filterTokenIdRepayment = null, string? filterTokenIdCollateral = null)
         {
             List<string> ergoTrees = OngoingLoanErgoTrees(filterTokenIdRepayment);
-            List<NodeBox> boxes = new List<NodeBox>();
+            List<Box<long>> boxes = new List<Box<long>>();
             List<SigmaFiBond> ongoingLoans = new List<SigmaFiBond>();
 
             foreach (var ergoTree in ergoTrees)
@@ -336,17 +337,17 @@ namespace FleetSharp.SigmaFi
         }
 
         //Aggregates all NodeBalanceés of all contract addresses.
-        public async Task<NodeBalance> GetTVL()
+        public async Task<NodeBalance<long>> GetTVL()
         {
-            List<NodeBalance> balances = new List<NodeBalance>();
-            NodeBalance totalBalance = new NodeBalance();
+            List<NodeBalance<long>> balances = new List<NodeBalance<long>>();
+            NodeBalance<long> totalBalance = new NodeBalance<long>();
 
-            totalBalance.unconfirmed = new NodeBalanceWrapper();
-            totalBalance.confirmed = new NodeBalanceWrapper();
+            totalBalance.unconfirmed = new NodeBalanceWrapper<long>();
+            totalBalance.confirmed = new NodeBalanceWrapper<long>();
             totalBalance.unconfirmed.nanoErgs = 0;
-            totalBalance.unconfirmed.tokens = new List<NodeBalanceToken>();
+            totalBalance.unconfirmed.tokens = new List<BalanceToken<long>>();
             totalBalance.confirmed.nanoErgs = 0;
-            totalBalance.confirmed.tokens = new List<NodeBalanceToken>();
+            totalBalance.confirmed.tokens = new List<BalanceToken<long>>();
 
             //gets the balances of all the contract addresses.
             var ergoTrees = OpenOrderErgoTrees().Concat(OngoingLoanErgoTrees());
@@ -361,23 +362,23 @@ namespace FleetSharp.SigmaFi
 
             foreach (var balance in balances)
             {
-                totalBalance.unconfirmed.nanoErgs += balance?.unconfirmed?.nanoErgs;
+                totalBalance.unconfirmed.nanoErgs += balance?.unconfirmed?.nanoErgs ?? 0;
                 if (balance?.unconfirmed?.tokens != null) totalBalance.unconfirmed.tokens.AddRange(balance.unconfirmed.tokens);
 
-                totalBalance.confirmed.nanoErgs += balance?.confirmed?.nanoErgs;
+                totalBalance.confirmed.nanoErgs += balance?.confirmed?.nanoErgs ?? 0;
                 if (balance?.confirmed?.tokens != null) totalBalance.confirmed.tokens.AddRange(balance.confirmed.tokens);
             }
 
-            totalBalance.unconfirmed.tokens = totalBalance.unconfirmed.tokens.GroupBy(x => x.tokenId).Select(x => new NodeBalanceToken() { tokenId = x.First().tokenId, amount = x.Sum(y => y.amount), decimals = x.First().decimals, name = x.First().name }).ToList();
-            totalBalance.confirmed.tokens = totalBalance.confirmed.tokens.GroupBy(x => x.tokenId).Select(x => new NodeBalanceToken() { tokenId = x.First().tokenId, amount = x.Sum(y => y.amount), decimals = x.First().decimals, name = x.First().name }).ToList();
+            totalBalance.unconfirmed.tokens = totalBalance.unconfirmed.tokens.GroupBy(x => x.tokenId).Select(x => new BalanceToken<long> { tokenId = x.First().tokenId, amount = x.Sum(y => y.amount), decimals = x.First().decimals, name = x.First().name }).ToList();
+            totalBalance.confirmed.tokens = totalBalance.confirmed.tokens.GroupBy(x => x.tokenId).Select(x => new BalanceToken<long> { tokenId = x.First().tokenId, amount = x.Sum(y => y.amount), decimals = x.First().decimals, name = x.First().name }).ToList();
 
             return totalBalance;
         }
 
-        private static async Task<SigmaFiVerifiedAssetAmount> CreateSigmaFiVerifiedAssetAmount(string? tokenId, long? amount, SigmaFiVerifiedAssetMetadata? metadata)
+        private static async Task<SigmaFiVerifiedAssetAmount> CreateSigmaFiVerifiedAssetAmount(string? tokenId, long amount, SigmaFiVerifiedAssetMetadata? metadata)
         {
             var tokenUSDPrice = await SpectrumFi.SpectrumFi.GetLastPriceForTokenInUSDCached(tokenId.ToLowerInvariant());
-            var amountWithDecimals = (Convert.ToDouble(amount ?? 0) / Math.Pow(10, metadata?.decimals ?? 0));
+            var amountWithDecimals = (Convert.ToDouble(amount) / Math.Pow(10, metadata?.decimals ?? 0));
 
             return new SigmaFiVerifiedAssetAmount()
             {
