@@ -355,14 +355,16 @@ namespace FleetSharp.SigmaFi
 
             //gets the balances of all the contract addresses.
             var ergoTrees = OpenOrderErgoTrees().Concat(OngoingLoanErgoTrees());
-            foreach (var ergoTree in ergoTrees)
+            /*foreach (var ergoTree in ergoTrees)
             {
                 var temp = await node.GetAddressBalance(ErgoAddress.fromErgoTree(ergoTree, Network.Mainnet).encode(Network.Mainnet));
                 if (temp != null)
                 {
                     balances.Add(temp);
                 }
-            }
+            }*/
+
+            balances = await node.GetAddressesBalances(ergoTrees.Select(x => ErgoAddress.fromErgoTree(x, Network.Mainnet).encode(Network.Mainnet)).ToList());
 
             foreach (var balance in balances)
             {
