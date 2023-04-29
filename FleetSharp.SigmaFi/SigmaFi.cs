@@ -282,14 +282,16 @@ namespace FleetSharp.SigmaFi
         public async Task<List<SigmaFiOrderExtended>?> GetAllOpenOrders(string? filterTokenIdRequested = null, string? filterTokenIdCollateral = null)
         {
             List<string> ergoTrees = OpenOrderErgoTrees(filterTokenIdRequested);
-            List<Box<long>> boxes = new List<Box<long>>();
             List<SigmaFiOrderExtended> openOrders = new List<SigmaFiOrderExtended>();
 
-            foreach (var ergoTree in ergoTrees)
+            /*foreach (var ergoTree in ergoTrees)
             {
                 var unspent = await node.GetUnspentBoxesByErgoTree(ergoTree);
                 if (unspent != null) boxes.AddRange(unspent);
-            }
+            }*/
+
+            //Do requests for all ergotrees at once instead of 1 by 1 (should give a LARGE speedup).
+            var boxes = await node.GetUnspentBoxesByErgoTrees(ergoTrees);
 
             //boxes should contain all unspent sigmafi order boxes
             foreach (var box in boxes)
@@ -311,14 +313,16 @@ namespace FleetSharp.SigmaFi
         public async Task<List<SigmaFiBond>?> GetAllOngoingLoans(string? filterTokenIdRepayment = null, string? filterTokenIdCollateral = null)
         {
             List<string> ergoTrees = OngoingLoanErgoTrees(filterTokenIdRepayment);
-            List<Box<long>> boxes = new List<Box<long>>();
             List<SigmaFiBond> ongoingLoans = new List<SigmaFiBond>();
 
-            foreach (var ergoTree in ergoTrees)
-            {
-                var unspent = await node.GetUnspentBoxesByErgoTree(ergoTree);
-                if (unspent != null) boxes.AddRange(unspent);
-            }
+            /* foreach (var ergoTree in ergoTrees)
+             {
+                 var unspent = await node.GetUnspentBoxesByErgoTree(ergoTree);
+                 if (unspent != null) boxes.AddRange(unspent);
+             }*/
+
+            //Do requests for all ergotrees at once instead of 1 by 1 (should give a LARGE speedup).
+            var boxes = await node.GetUnspentBoxesByErgoTrees(ergoTrees);
 
             //boxes should contain all unspent sigmafi order boxes
             foreach (var box in boxes)
