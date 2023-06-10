@@ -5,6 +5,10 @@ using FleetSharp.Types;
 using FleetSharp.SpectrumFi;
 using System.Numerics;
 
+using static FleetSharp.Sigma.ConstantSerializer;
+using static FleetSharp.Sigma.ISigmaCollection;
+using static FleetSharp.Sigma.IPrimitiveSigmaType;
+
 namespace FleetSharp.SigmaFi
 {
     public class SigmaFi
@@ -18,7 +22,7 @@ namespace FleetSharp.SigmaFi
             node = new FleetSharp.NodeInterface(nodeURL);
         }
 
-        private static long SAFE_MIN_BOX_VALUE = 1000000;
+        private static long SAFE_MIN_BOX_VALUE = 1000000L;
         private static int ergoSecondsPerBlock = 120;
 
         //https://github.com/capt-nemo429/sigmafi-ui/blob/main/src/offchain/plugins.ts
@@ -63,7 +67,7 @@ namespace FleetSharp.SigmaFi
         //private static List<string>? OngoingLoansErgoTrees = null;
 
         //Bond
-        private string buildBondContract(string tokenId)
+        public string buildBondContract(string tokenId)
         {
             if (tokenId == "erg") return ERG_BOND_CONTRACT;
             return string.Join(tokenId, TOKEN_BOND_CONTRACT_TEMPLATE);
@@ -85,7 +89,7 @@ namespace FleetSharp.SigmaFi
             return string.Join("", ret).ToLowerInvariant();
         }
 
-        private string BuildOrderContract(string tokenId, string type)
+        public string BuildOrderContract(string tokenId, string type)
         {
             if (tokenId == "erg")
             {
@@ -145,7 +149,7 @@ namespace FleetSharp.SigmaFi
             return ret;
         }
 
-        private string ExtractTokenIdFromOrderContract(string contract)
+        public string ExtractTokenIdFromOrderContract(string contract)
         {
             if (contract.StartsWith(ORDER_ON_CLOSE_TOKEN_CONTRACT_TEMPLATE[0]) || contract.StartsWith(ORDER_FIXED_TOKEN_CONTRACT_TEMPLATE[0]))
             {
@@ -155,7 +159,7 @@ namespace FleetSharp.SigmaFi
 
             return "erg";
         }
-        private string ExtractTokenIdFromBondContract(string contract)
+        public string ExtractTokenIdFromBondContract(string contract)
         {
             if (contract.StartsWith(TOKEN_BOND_CONTRACT_TEMPLATE[0]))
             {
@@ -171,10 +175,10 @@ namespace FleetSharp.SigmaFi
             var tokenId = ExtractTokenIdFromOrderContract(box.ergoTree);
             var token = await Cache.GetTokenFromCache(this.node, tokenId);
 
-            byte[] borrower = box?.additionalRegisters?.R4 != null ? ConstantSerializer.SParse(box.additionalRegisters.R4) : "";
-            long amount = box?.additionalRegisters?.R5 != null ? ConstantSerializer.SParse(box.additionalRegisters.R5) : 0;
-            long repayment = box?.additionalRegisters?.R6 != null ? ConstantSerializer.SParse(box.additionalRegisters.R6) : 0;
-            int maturityLength = box?.additionalRegisters?.R7 != null ? ConstantSerializer.SParse(box.additionalRegisters.R7) : 0;
+            byte[] borrower = box?.additionalRegisters?.R4 != null ? SParse(box.additionalRegisters.R4) : "";
+            long amount = box?.additionalRegisters?.R5 != null ? SParse(box.additionalRegisters.R5) : 0;
+            long repayment = box?.additionalRegisters?.R6 != null ? SParse(box.additionalRegisters.R6) : 0;
+            int maturityLength = box?.additionalRegisters?.R7 != null ? SParse(box.additionalRegisters.R7) : 0;
 
             long interestValue = repayment - amount;
             SigmaFiVerifiedAssetAmount interestObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, interestValue, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
@@ -233,10 +237,10 @@ namespace FleetSharp.SigmaFi
             var tokenId = ExtractTokenIdFromBondContract(box.ergoTree);
             var token = await Cache.GetTokenFromCache(this.node, tokenId);
 
-            byte[] borrower = box?.additionalRegisters?.R5 != null ? ConstantSerializer.SParse(box.additionalRegisters.R5) : "";
-            long repayment = box?.additionalRegisters?.R6 != null ? ConstantSerializer.SParse(box.additionalRegisters.R6) : 0;
-            int term = (box?.additionalRegisters?.R7 != null ? ConstantSerializer.SParse(box.additionalRegisters.R7) : 0);
-            byte[] lender = box?.additionalRegisters?.R8 != null ? ConstantSerializer.SParse(box.additionalRegisters.R8) : "";
+            byte[] borrower = box?.additionalRegisters?.R5 != null ? SParse(box.additionalRegisters.R5) : "";
+            long repayment = box?.additionalRegisters?.R6 != null ? SParse(box.additionalRegisters.R6) : 0;
+            int term = (box?.additionalRegisters?.R7 != null ? SParse(box.additionalRegisters.R7) : 0);
+            byte[] lender = box?.additionalRegisters?.R8 != null ? SParse(box.additionalRegisters.R8) : "";
 
             SigmaFiVerifiedAssetAmount repaymentObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, repayment, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
 

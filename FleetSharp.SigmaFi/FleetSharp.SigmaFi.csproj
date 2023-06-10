@@ -4,13 +4,13 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.24</Version>
+    <Version>1.0.26</Version>
     <Authors>Pulsarz</Authors>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FleetSharp" Version="1.0.41" />
+    <PackageReference Include="FleetSharp" Version="1.0.60" />
     <PackageReference Include="FleetSharp.SpectrumFi" Version="1.0.5" />
   </ItemGroup>
 
