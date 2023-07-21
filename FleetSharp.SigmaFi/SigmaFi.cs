@@ -242,7 +242,7 @@ namespace FleetSharp.SigmaFi
             int term = (box?.additionalRegisters?.R7 != null ? SParse(box.additionalRegisters.R7) : 0);
             byte[] lender = box?.additionalRegisters?.R8 != null ? SParse(box.additionalRegisters.R8) : "";
 
-            SigmaFiVerifiedAssetAmount repaymentObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, repayment, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : token.name, tokenId == "erg" ? 9 : token.decimals));
+            SigmaFiVerifiedAssetAmount repaymentObj = await CreateSigmaFiVerifiedAssetAmount(tokenId, repayment, new SigmaFiVerifiedAssetMetadata(tokenId == "erg" ? "erg" : (token?.name ?? tokenId), tokenId == "erg" ? 9 : (token?.decimals ?? 0)));
 
             double collateralUSDValue = 0;
 
@@ -260,7 +260,7 @@ namespace FleetSharp.SigmaFi
                 foreach (var asset in box.assets)
                 {
                     var collateralToken = await Cache.GetTokenFromCache(this.node, asset.tokenId);
-                    var assetObj = await CreateSigmaFiVerifiedAssetAmount(asset.tokenId, asset.amount, new SigmaFiVerifiedAssetMetadata(((collateralToken?.name ?? "") == "" ? asset.tokenId : collateralToken?.name), collateralToken.decimals));
+                    var assetObj = await CreateSigmaFiVerifiedAssetAmount(asset.tokenId, asset.amount, new SigmaFiVerifiedAssetMetadata(((collateralToken?.name ?? "") == "" ? asset.tokenId : (collateralToken?.name ?? asset.tokenId)), (collateralToken?.decimals ?? 0)));
                     collateral.Add(assetObj);
                     collateralUSDValue += assetObj.usdValue ?? 0;
                 }
@@ -300,14 +300,20 @@ namespace FleetSharp.SigmaFi
             //boxes should contain all unspent sigmafi order boxes
             foreach (var box in boxes)
             {
-                var order = await ParseOrderBox(box);
-                if (filterTokenIdRequested == null || order.requested?.tokenId == filterTokenIdRequested)
-                {
-                    if (filterTokenIdCollateral == null || (order.collateral?.Exists(x => x.tokenId == filterTokenIdCollateral) ?? false))
+                //try
+                //{
+                    var order = await ParseOrderBox(box);
+                    if (filterTokenIdRequested == null || order.requested?.tokenId == filterTokenIdRequested)
                     {
-                        openOrders.Add(order);
+                        if (filterTokenIdCollateral == null || (order.collateral?.Exists(x => x.tokenId == filterTokenIdCollateral) ?? false))
+                        {
+                            openOrders.Add(order);
+                        }
                     }
-                }
+                //}
+                //catch (Exception e)
+                //{
+                //}
             }
 
             return openOrders;
@@ -331,14 +337,20 @@ namespace FleetSharp.SigmaFi
             //boxes should contain all unspent sigmafi order boxes
             foreach (var box in boxes)
             {
-                var bond = await ParseBondBox(box);
-                if (filterTokenIdRepayment == null || bond.repayment?.tokenId == filterTokenIdRepayment)
-                {
-                    if (filterTokenIdCollateral == null || (bond.collateral?.Exists(x => x.tokenId == filterTokenIdCollateral) ?? false))
+                //try
+                //{
+                    var bond = await ParseBondBox(box);
+                    if (filterTokenIdRepayment == null || bond.repayment?.tokenId == filterTokenIdRepayment)
                     {
-                        ongoingLoans.Add(bond);
+                        if (filterTokenIdCollateral == null || (bond.collateral?.Exists(x => x.tokenId == filterTokenIdCollateral) ?? false))
+                        {
+                            ongoingLoans.Add(bond);
+                        }
                     }
-                }
+                //}
+                //catch (Exception e)
+                //{
+                //}
             }
 
             return ongoingLoans;

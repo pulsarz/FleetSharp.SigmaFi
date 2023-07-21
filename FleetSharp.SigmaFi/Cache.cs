@@ -16,19 +16,28 @@ namespace FleetSharp.SigmaFi
         public static async Task<TokenDetail<long>?> GetTokenFromCache(NodeInterface node, string tokenId)
         {
             TokenDetail<long>? ret = null;
-            if (tokenId == "ERG" || tokenId == "erg") return null;
+            if (tokenId.ToLowerInvariant() == "erg") return null;
             var succes = tokenCache.TryGetValue(tokenId, out ret);
 
             if (succes && ret != null) return ret;
             else
             {
                 //Retrieve token but still not locked
-                ret = await node.GetToken(tokenId);
+                try
+                {
+                    ret = await node.GetToken(tokenId);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Failed to retrieve token {tokenId} from the node!\n{e.ToString()}");
+                }
+
 
                 if (ret != null)
                 {
                     tokenCache.TryAdd(tokenId, ret);
                 }
+
             }
 
             return ret;
