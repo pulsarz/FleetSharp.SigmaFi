@@ -1,17 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.0.27</Version>
+    <Version>1.1.0</Version>
     <Authors>Pulsarz</Authors>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="FleetSharp" Version="1.0.60" />
-    <PackageReference Include="FleetSharp.SpectrumFi" Version="1.0.5" />
+    <PackageReference Include="FleetSharp" Version="1.1.0" />
+    <PackageReference Include="FleetSharp.SpectrumFi" Version="1.1.0" />
   </ItemGroup>
-
 </Project>
