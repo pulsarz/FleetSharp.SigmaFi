@@ -300,8 +300,8 @@ namespace FleetSharp.SigmaFi
             //boxes should contain all unspent sigmafi order boxes
             foreach (var box in boxes)
             {
-                //try
-                //{
+                try
+                {
                     var order = await ParseOrderBox(box);
                     if (filterTokenIdRequested == null || order.requested?.tokenId == filterTokenIdRequested)
                     {
@@ -310,10 +310,11 @@ namespace FleetSharp.SigmaFi
                             openOrders.Add(order);
                         }
                     }
-                //}
-                //catch (Exception e)
-                //{
-                //}
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
             }
 
             return openOrders;
@@ -337,8 +338,8 @@ namespace FleetSharp.SigmaFi
             //boxes should contain all unspent sigmafi order boxes
             foreach (var box in boxes)
             {
-                //try
-                //{
+                try
+                {
                     var bond = await ParseBondBox(box);
                     if (filterTokenIdRepayment == null || bond.repayment?.tokenId == filterTokenIdRepayment)
                     {
@@ -347,10 +348,11 @@ namespace FleetSharp.SigmaFi
                             ongoingLoans.Add(bond);
                         }
                     }
-                //}
-                //catch (Exception e)
-                //{
-                //}
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
             }
 
             return ongoingLoans;
