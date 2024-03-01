@@ -54,7 +54,11 @@ namespace FleetSharp.SigmaFi
             new SigmaFiVerifiedAsset { tokenId = "003bd19d0187117f130b62e1bcab0939929ff5c7709f843c5c4dd158949285d0",  metadata = new SigmaFiVerifiedAssetMetadata("SigRSV", 0) },
             new SigmaFiVerifiedAsset { tokenId = "d71693c49a84fbbecd4908c94813b46514b18b67a99952dc1e6e4791556de413",  metadata = new SigmaFiVerifiedAssetMetadata("ergopad", 2) },
             new SigmaFiVerifiedAsset { tokenId = "1fd6e032e8476c4aa54c18c1a308dce83940e8f4a28f576440513ed7326ad489",  metadata = new SigmaFiVerifiedAssetMetadata("Paideia", 4) },
-            new SigmaFiVerifiedAsset { tokenId = "9a06d9e545a41fd51eeffc5e20d818073bf820c635e2a9d922269913e0de369d",  metadata = new SigmaFiVerifiedAssetMetadata("SPF", 6) }
+            new SigmaFiVerifiedAsset { tokenId = "9a06d9e545a41fd51eeffc5e20d818073bf820c635e2a9d922269913e0de369d",  metadata = new SigmaFiVerifiedAssetMetadata("SPF", 6) },
+            new SigmaFiVerifiedAsset { tokenId = "cbd75cfe1a4f37f9a22eaee516300e36ea82017073036f07a09c1d2e10277cda",  metadata = new SigmaFiVerifiedAssetMetadata("hodlERG3", 9) },
+            new SigmaFiVerifiedAsset { tokenId = "7ba2a85fdb302a181578b1f64cb4a533d89b3f8de4159efece75da41041537f9",  metadata = new SigmaFiVerifiedAssetMetadata("GORT", 0) },
+            new SigmaFiVerifiedAsset { tokenId = "8b08cdd5449a9592a9e79711d7d79249d7a03c535d17efaee83e216e80a44c4b",  metadata = new SigmaFiVerifiedAssetMetadata("RSN", 3) },
+            new SigmaFiVerifiedAsset { tokenId = "e023c5f382b6e96fbd878f6811aac73345489032157ad5affb84aefd4956c297",  metadata = new SigmaFiVerifiedAssetMetadata("rsADA", 6) },
         };
         /*
         //https://github.com/capt-nemo429/sigmafi-ui/blob/main/src/views/DashboardView.vue
